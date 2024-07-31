@@ -113,8 +113,8 @@ app.get("/users/details/:id", authenticateToken, async (req, res) => {
 
 app.put("/users/details/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { username, password, name, orders, image_url, date_of_birth } = req.body;
-  if (!username || !password || !role || !name || orders === undefined || !image_url || !date_of_birth) {
+  const { username, name, orders, image_url, date_of_birth } = req.body;
+  if (!username ||  !role || !name || orders === undefined || !image_url || !date_of_birth) {
     return res.status(400).send("All fields are required");
   }
   try {
