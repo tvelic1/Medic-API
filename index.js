@@ -96,6 +96,20 @@ app.post("/logout", (req, res) => {
     res.status(200).json({ message: "Logout successful" });
   });
 });
+app.get("/users/details/:id", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    if (result.rows.length > 0) {
+      res.status(200).json(result.rows[0]);
+    } else {
+      res.status(404).send("User not found");
+    }
+  } catch (err) {
+    console.error("Error fetching user details:", err);
+    res.status(500).send("Error fetching user details");
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 
