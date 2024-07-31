@@ -113,17 +113,17 @@ app.get("/users/details/:id", authenticateToken, async (req, res) => {
 
 app.put("/users/details/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { username, name, orders, image_url, date_of_birth } = req.body;
+  const { username, name, orders, image_url} = req.body;
   if (!username ||  !role || !name || orders === undefined || !image_url || !date_of_birth) {
     return res.status(400).send("All fields are required");
   }
   try {
     const updateUserQuery = `
       UPDATE users
-      SET username = $1,  name = $2, orders = $3, image_url = $4, date_of_birth = $5
+      SET username = $1,  name = $2, orders = $3, image_url = $4
       WHERE id = $6 RETURNING *
     `;
-    const values = [username, name, orders, image_url, date_of_birth, id];
+    const values = [username, name, orders, image_url, id];
     const result = await pool.query(updateUserQuery, values);
     if (result.rows.length > 0) {
       res.status(200).json({ message: "User updated successfully", user: result.rows[0] });
