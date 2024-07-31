@@ -121,7 +121,7 @@ app.put("/users/details/:id", authenticateToken, async (req, res) => {
     const updateUserQuery = `
       UPDATE users
       SET username = $1,  name = $2, orders = $3, image_url = $4
-      WHERE id = $6 RETURNING *
+      WHERE id = $5 RETURNING *
     `;
     const values = [username, name, orders, image_url, id];
     const result = await pool.query(updateUserQuery, values);
