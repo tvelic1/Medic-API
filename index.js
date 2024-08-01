@@ -68,7 +68,9 @@ app.post("/login", async (req, res) => {
 
 const checkUsername = async (req, res, next) => {
   const {username}=req.body;
-  
+
+  if(!username) next();
+
     if (username.length > 15) {
       return res.status(400).send("Username has to be 15 characters or less");
     }
@@ -100,7 +102,7 @@ const generateAndSetToken = (user, res) => {
 
 };
 
-const authenticateToken = async (req, res, next) => {
+const authenticateToken =  (req, res, next) => {
 
   const token = req.cookies.tokenJwtWeb;
   if (!token) return res.status(401).send("Access denied.");
