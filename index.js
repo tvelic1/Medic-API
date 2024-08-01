@@ -36,7 +36,7 @@ app.set("trust proxy", 1);
 
 app.use(session({
   secret: "tajna",
-  resave: false,
+  resave: true,
   saveUninitialized: true,
   cookie:{secure:false}
   
@@ -57,7 +57,7 @@ app.post("/login",  async (req, res) => {
     if (result.rows.length > 0) {
       const user = result.rows[0];
       req.session.user = { username: user.username, role: user.role }; 
-      console.log(req.session.user)
+      //console.log(req.session.user)
       res.status(200).json({ message: "User authenticated successfully." });
     } else {
       res.status(401).send("Invalid username, password, or role.");
@@ -68,8 +68,8 @@ app.post("/login",  async (req, res) => {
   }
 });
 
-const authenticateToken =  async (req, res, next) => {
-  if (!req.session) {
+const authenticateToken =  (req, res, next) => {
+  if (!req.session.user) {
     return res.status(401).send("Access denied.");
   }
   next();
