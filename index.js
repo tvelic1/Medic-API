@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const app = express();
@@ -117,7 +118,7 @@ app.post("/logout", (req, res) => {
 
 app.post("/register",authenticateToken, async (req, res) => {
   const { username, password, name, orders, image_url, date_of_birth } = req.body;
-  if (!username || !password || !name || orders === undefined || !image_url || !date_of_birth) {
+  if (!username || !password || !role || !name || orders === undefined || !image_url || !date_of_birth) {
     return res.status(400).send("All fields are required");
   }
   try {
