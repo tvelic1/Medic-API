@@ -67,13 +67,14 @@ app.post("/login", async (req, res) => {
 });
 
 const checkUsername = async (req, res, next) => {
-  if (req.body.username) {
-    if (req.body.username.length > 15) {
+  const {username}=req.body;
+  
+    if (username.length > 15) {
       return res.status(400).send("Username has to be 15 characters or less");
     }
 
     try {
-      const result = await pool.query('SELECT COUNT(*) FROM users WHERE username = $1', [req.body.username]);
+      const result = await pool.query('SELECT COUNT(*) FROM users WHERE username = $1', [username]);
       if (result.rows[0].count > 0) {
         return res.status(400).send("Username already exists!");
       }
@@ -82,8 +83,7 @@ const checkUsername = async (req, res, next) => {
       return res.status(500).send("Internal server error");
     }
   }
-  next();
-};
+;
 
 const generateAndSetToken = (user, res) => {
 
@@ -100,7 +100,7 @@ const generateAndSetToken = (user, res) => {
 
 };
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
 
   const token = req.cookies.tokenJwtWeb;
   if (!token) return res.status(401).send("Access denied.");
