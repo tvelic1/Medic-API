@@ -97,7 +97,7 @@ const generateAndSetToken = (user, res) => {
   res.cookie("tokenJwtWeb", newToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "none",
   });
 
 };
@@ -130,7 +130,7 @@ app.post("/logout", (req, res) => {
   res.clearCookie("tokenJwtWeb", {
     httpOnly: true,
     secure: true,
-    sameSite: "Strict",
+    sameSite: "none",
   });
   res.status(200).json({ message: "Logout successful" });
 });
