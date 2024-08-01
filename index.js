@@ -66,6 +66,26 @@ app.post("/login", async (req, res) => {
 
 });
 
+const checkUsername = async (req,res,next) =>{
+  if(req.body.username){
+
+    if(req.body.username.length > 15){
+      res.status(400).send("Username has to be 15 characters or less");
+    }
+
+    try{
+      const result=await pool.query('SELECT COUNT(*) FROM users WHERE username = $1',[req.body.username])
+      if(result.rows[0].count > 0){
+        res.status(400).send(" Username already exists !")
+      }
+    } catch(error){
+      res.status(500).send("Internal server error");
+    }
+
+  }
+  next();
+}
+
 
 const generateAndSetToken = (user, res) => {
 
@@ -98,7 +118,7 @@ const authenticateToken = (req, res, next) => {
 app.get("/users", authenticateToken, async (req, res) => {
 
   try {
-    const result = await pool.query("SELECT * FROM users");
+    const result = await pool.query("SELECT * FROM users WHERE role != 'admin'");
     res.status(200).json(result.rows);
   } catch (err) {
     console.error("Error fetching users:", err);
@@ -116,7 +136,7 @@ app.post("/logout", (req, res) => {
 });
 
 
-app.post("/register",authenticateToken, async (req, res) => {
+app.post("/register",authenticateToken, checkUsername, async (req, res) => {
   const { username, password, name, orders, image_url, date_of_birth } = req.body;
   if (!username || !password || !name || orders === undefined || !image_url || !date_of_birth) {
     return res.status(400).send("All fields are required");
@@ -169,6 +189,48 @@ app.put("/users/details/:id", authenticateToken, async (req, res) => {
   } catch (err) {
     console.error("Error updating user:", err);
     res.status(500).send("Error updating user");
+  }
+});
+
+app.put("/users/block/:id", authenticateToken, async (req, res) => {
+
+  const { id } = req.params;
+  try {
+    const updateUserQuery = `
+      UPDATE users
+      SET status = $1
+      WHERE id = $2 RETURNING *
+    `;
+    const values = [req.body.status,id];
+    const result = await pool.query(updateUserQuery, values);
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "User blocked successfully", user: result.rows[0] });
+    } else {
+      res.status(404).send("User not found");
+    }
+  } catch (err) {
+    console.error("Error updating user:", err);
+    res.status(500).send("Error updating user");
+  }
+});
+
+app.delete("/users/:id", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deleteUserQuery = `
+      DELETE FROM users
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await pool.query(deleteUserQuery, [id]);
+    if (result.rows.length > 0) {
+      res.status(200).json({ message: "User deleted successfully", user: result.rows[0] });
+    } else {
+      res.status(404).send("User not found");
+    }
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).send("Error deleting user");
   }
 });
 
