@@ -11,7 +11,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "OPTIONS","PUT","DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["set-cookie"],
     credentials: true,
@@ -29,7 +29,7 @@ app.options(
   "*",
   cors({
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "OPTIONS","PUT","DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["set-cookie"],
     credentials: true,
@@ -71,7 +71,7 @@ const generateAndSetToken = (user, res) => {
   const newToken = jwt.sign(
     { username: user.username, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: "1m" }
   );
   res.cookie("tokenJwtWeb", newToken, {
     httpOnly: true,
