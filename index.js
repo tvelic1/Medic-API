@@ -71,7 +71,7 @@ const generateAndSetToken = (user, res) => {
   const newToken = jwt.sign(
     { username: user.username, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "1m" }
+    { expiresIn: "1h" }
   );
   res.cookie("tokenJwtWeb", newToken, {
     httpOnly: true,
