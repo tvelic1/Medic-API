@@ -193,7 +193,7 @@ app.put("/users/details/:id", authenticateToken, async (req, res) => {
 });
 
 app.put("/users/block/:id", authenticateToken, async (req, res) => {
-
+  const{status}=req.body;
   const { id } = req.params;
   try {
     const updateUserQuery = `
@@ -201,7 +201,7 @@ app.put("/users/block/:id", authenticateToken, async (req, res) => {
       SET status = $1
       WHERE id = $2 RETURNING *
     `;
-    const values = [req.body.status,id];
+    const values = [status,id];
     const result = await pool.query(updateUserQuery, values);
     if (result.rows.length > 0) {
       res.status(200).json({ message: "User blocked successfully", user: result.rows[0] });
