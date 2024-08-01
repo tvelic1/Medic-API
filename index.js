@@ -118,7 +118,7 @@ app.post("/logout", (req, res) => {
 
 app.post("/register",authenticateToken, async (req, res) => {
   const { username, password, name, orders, image_url, date_of_birth } = req.body;
-  if (!username || !password || !role || !name || orders === undefined || !image_url || !date_of_birth) {
+  if (!username || !password || !name || orders === undefined || !image_url || !date_of_birth) {
     return res.status(400).send("All fields are required");
   }
   try {
