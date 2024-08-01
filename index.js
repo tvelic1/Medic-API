@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-const session = require("express-session");
 require("dotenv").config();
 const app = express();
 app.use(express.json());
@@ -11,8 +11,10 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
-    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-    credentials: true, 
+    methods: ["GET", "POST", "OPTIONS","PUT","DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["set-cookie"],
+    credentials: true,
   })
 );
 
@@ -27,22 +29,17 @@ app.options(
   "*",
   cors({
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
-    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-    credentials:true,
+    methods: ["GET", "POST", "OPTIONS","PUT","DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["set-cookie"],
+    credentials: true,
   })
 );
 
 app.set("trust proxy", 1);
 
-app.use(session({
-  secret: "tajna",
-  resave: true,
-  saveUninitialized: true,
-  cookie:{secure:false}
-  
-}));
+app.post("/login", async (req, res) => {
 
-app.post("/login",  async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).send("Username and password are required");
@@ -56,27 +53,48 @@ app.post("/login",  async (req, res) => {
     const result = await pool.query(checkUserQuery, values);
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      req.session.user = { username: user.username, role: user.role }; 
-      //console.log(req.session.user)
+      generateAndSetToken(user, res);
       res.status(200).json({ message: "User authenticated successfully." });
-    } else {
+    }
+     else {
       res.status(401).send("Invalid username, password, or role.");
     }
   } catch (err) {
     console.error("Error checking user:", err);
     res.status(500).send("Error checking user");
   }
+
 });
 
-const authenticateToken =  (req, res, next) => {
-  if (!req.session.user) {
-    return res.status(401).send("Access denied.");
-  }
-  next();
+const generateAndSetToken = (user, res) => {
+
+  const newToken = jwt.sign(
+    { username: user.username, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1m" }
+  );
+  res.cookie("tokenJwtWeb", newToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+
 };
 
-app.get("/users", authenticateToken, async(req, res) => {
-  console.log("auth",req.session.user)
+const authenticateToken = (req, res, next) => {
+
+  const token = req.cookies.tokenJwtWeb;
+  if (!token) return res.status(401).send("Access denied.");
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).send("Invalid token.");
+    generateAndSetToken(user, res);
+    req.user = user;
+    next();
+  });
+
+};
+
+app.get("/users", authenticateToken, async (req, res) => {
 
   try {
     const result = await pool.query("SELECT * FROM users");
@@ -85,17 +103,37 @@ app.get("/users", authenticateToken, async(req, res) => {
     console.error("Error fetching users:", err);
     res.status(500).send("Error fetching users");
   }
+
+});
+app.post("/logout", (req, res) => {
+  res.clearCookie("tokenJwtWeb", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+  res.status(200).json({ message: "Logout successful" });
 });
 
-app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).send("Error logging out");
-    }
-    
-    res.status(200).json({ message: "Logout successful" });
-  });
+
+app.post("/register",authenticateToken, async (req, res) => {
+  const { username, password, name, orders, image_url, date_of_birth } = req.body;
+  if (!username || !password || !name || orders === undefined || !image_url || !date_of_birth) {
+    return res.status(400).send("All fields are required");
+  }
+  try {
+    const insertUserQuery = `
+      INSERT INTO users (username, password, name, orders, image_url, date_of_birth)
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+    `;
+    const values = [username, password, name, orders, image_url, date_of_birth];
+    const result = await pool.query(insertUserQuery, values);
+    res.status(201).json({ message: "User registered successfully", user: result.rows[0] });
+  } catch (err) {
+    console.error("Error registering user:", err);
+    res.status(500).send("Error registering user");
+  }
 });
+
 app.get("/users/details/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
