@@ -173,34 +173,45 @@ app.get("/users/details/:id", authenticateToken, async (req, res) => {
 
 app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res) => {
   const { id } = req.params;
-  const { username, name, orders, date_of_birth, image_url} = req.body;
-  let updateUserQuery='';
-  let values=[];
+  const { username, name, orders, date_of_birth, image_url } = req.body;
+
+  let fieldsToUpdate = [];
+  let values = [];
+
+  if (username) {
+    fieldsToUpdate.push("username = $1");
+    values.push(username);
+  }
+  if (name) {
+    fieldsToUpdate.push("name = $" + (values.length + 1));
+    values.push(name);
+  }
+  if (orders) {
+    fieldsToUpdate.push("orders = $" + (values.length + 1));
+    values.push(orders);
+  }
+  if (date_of_birth) {
+    fieldsToUpdate.push("date_of_birth = $" + (values.length + 1));
+    values.push(date_of_birth);
+  }
+  if (image_url) {
+    fieldsToUpdate.push("image_url = $" + (values.length + 1));
+    values.push(image_url);
+  }
+
+  if(values.length==0){
+    res.status(200).json({ message: "No changes"})
+  }
+
+  const updateUserQuery = `
+    UPDATE users
+    SET ${fieldsToUpdate.join(', ')}
+    WHERE id = $${values.length + 1}
+    RETURNING *
+  `;
+  values.push(id);
+
   try {
-    
-    if(username){
-
-     updateUserQuery = `
-      UPDATE users
-      SET username = $1, name = $2, orders = $3, date_of_birth=$4, image_url = $5
-      WHERE id = $6 RETURNING *
-    `;
-     values = [username, name, orders, date_of_birth, image_url, id];
-     //console.log(values);
-    }
-
-     else{
-
-      updateUserQuery = `
-      UPDATE users
-      SET name = $1, orders = $2, date_of_birth=$3, image_url = $4
-      WHERE id = $5 RETURNING *
-    `;
-     values = [name, orders, date_of_birth, image_url, id];
-     //console.log(values);
-
-
-     }
     const result = await pool.query(updateUserQuery, values);
     if (result.rows.length > 0) {
       res.status(200).json({ message: "User updated successfully", user: result.rows[0] });
@@ -212,6 +223,7 @@ app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res)
     res.status(500).send("Error updating user");
   }
 });
+
 
 app.put("/users/block/:id", authenticateToken, async (req, res) => {
   const{status}=req.body;
