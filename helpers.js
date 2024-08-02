@@ -12,8 +12,9 @@ const checkUsername = async (req, res, next) => {
   const { username } = req.body;
 
   if (!username) {
-    next();
-  } else {
+    return next();
+  } 
+
     if (username.length > 15) {
       return res.status(400).send("Username has to be 15 characters or less");
     }
@@ -24,14 +25,15 @@ const checkUsername = async (req, res, next) => {
         return res.status(400).send("Username already exists!");
       }
       next();
+      
     } catch (error) {
       return res.status(500).send("Internal server error");
     }
-  }
+  
 };
 
 function isDateValid(dateString) {
-    
+
     const dateOfBirth = new Date(dateString);
     const currentDate = new Date();
     return dateOfBirth <= currentDate; 

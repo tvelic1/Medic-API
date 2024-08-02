@@ -96,7 +96,7 @@ app.post("/register",authenticateToken, checkUsername, async (req, res) => {
     return res.status(400).send("All fields are required");
   }
    if(!isDateValid(date_of_birth)){
-    res.status(400).send("Invalid date of birth");
+    return res.status(400).send("Invalid date of birth");
    }
 
   try {
@@ -148,10 +148,9 @@ app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res)
     values.push(orders);
   }
   if (date_of_birth) {
-    if(!isDateValid(date_of_birth)){
-      res.status(400).send("Invalid date of birth");
-     }
-
+    if(!isDateValid(date_of_birth))
+      return res.status(400).send("Invalid date of birth");
+     
     fieldsToUpdate.push("date_of_birth = $" + (values.length + 1));
     values.push(date_of_birth);
   }
@@ -160,8 +159,8 @@ app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res)
     values.push(image_url);
   }
 
-  if(values.length==0){
-    res.status(200).json({ message: "No changes"})
+  if(values.length===0){
+     return res.status(200).json({ message: "No changes"})
   }
 
   const updateUserQuery = `
