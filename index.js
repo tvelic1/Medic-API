@@ -7,7 +7,9 @@ require("dotenv").config();
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-const {generateAndSetToken, checkUsername, authenticateToken } = require('./middleware');
+const {generateAndSetToken,authenticateToken } = require('./jwt');
+const {checkUsername,isDateValid } = require('./helpers');
+
 app.use(
   cors({
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
@@ -93,6 +95,10 @@ app.post("/register",authenticateToken, checkUsername, async (req, res) => {
   if (!username || !password || !name || orders === undefined || !image_url || !date_of_birth) {
     return res.status(400).send("All fields are required");
   }
+   if(!isDateValid(date_of_birth)){
+    res.status(400).send("Invalid date of birth");
+   }
+
   try {
     const insertUserQuery = `
       INSERT INTO users (username, password, name, orders, image_url, date_of_birth)
@@ -142,6 +148,10 @@ app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res)
     values.push(orders);
   }
   if (date_of_birth) {
+    if(!isDateValid(date_of_birth)){
+      res.status(400).send("Invalid date of birth");
+     }
+
     fieldsToUpdate.push("date_of_birth = $" + (values.length + 1));
     values.push(date_of_birth);
   }
