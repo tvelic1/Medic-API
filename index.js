@@ -69,8 +69,9 @@ app.post("/login", async (req, res) => {
 const checkUsername = async (req, res, next) => {
   const {username}=req.body;
 
-  if(!username) next();
-
+  if(!username) 
+    {next();}
+else{
     if (username.length > 15) {
       return res.status(400).send("Username has to be 15 characters or less");
     }
@@ -84,7 +85,7 @@ const checkUsername = async (req, res, next) => {
     } catch (error) {
       return res.status(500).send("Internal server error");
     }
-  }
+  }}
 ;
 
 const generateAndSetToken = (user, res) => {
@@ -173,8 +174,8 @@ app.get("/users/details/:id", authenticateToken, async (req, res) => {
 app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res) => {
   const { id } = req.params;
   const { username, name, orders, date_of_birth, image_url} = req.body;
-  const updateUserQuery='';
-  const values=[];
+  let updateUserQuery='';
+  let values=[];
   try {
     
     if(username){
@@ -185,6 +186,7 @@ app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res)
       WHERE id = $6 RETURNING *
     `;
      values = [username, name, orders, date_of_birth, image_url, id];
+     //console.log(values);
     }
 
      else{
@@ -195,6 +197,8 @@ app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res)
       WHERE id = $5 RETURNING *
     `;
      values = [name, orders, date_of_birth, image_url, id];
+     //console.log(values);
+
 
      }
     const result = await pool.query(updateUserQuery, values);
