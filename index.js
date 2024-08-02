@@ -173,13 +173,30 @@ app.get("/users/details/:id", authenticateToken, async (req, res) => {
 app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res) => {
   const { id } = req.params;
   const { username, name, orders, date_of_birth, image_url} = req.body;
+  const updateUserQuery='';
+  const values=[];
   try {
-    const updateUserQuery = `
+    
+    if(username){
+
+     updateUserQuery = `
       UPDATE users
       SET username = $1, name = $2, orders = $3, date_of_birth=$4, image_url = $5
       WHERE id = $6 RETURNING *
     `;
-    const values = [username, name, orders, date_of_birth, image_url, id];
+     values = [username, name, orders, date_of_birth, image_url, id];
+    }
+
+     else{
+
+      updateUserQuery = `
+      UPDATE users
+      SET name = $1, orders = $2, date_of_birth=$3, image_url = $4
+      WHERE id = $5 RETURNING *
+    `;
+     values = [name, orders, date_of_birth, image_url, id];
+
+     }
     const result = await pool.query(updateUserQuery, values);
     if (result.rows.length > 0) {
       res.status(200).json({ message: "User updated successfully", user: result.rows[0] });
