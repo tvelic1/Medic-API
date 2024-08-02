@@ -7,7 +7,7 @@ require("dotenv").config();
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-const { checkUsername, authenticateToken } = require('./middleware');
+const {generateAndSetToken, checkUsername, authenticateToken } = require('./middleware');
 app.use(
   cors({
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
