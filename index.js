@@ -170,7 +170,7 @@ app.get("/users/details/:id", authenticateToken, async (req, res) => {
   }
 });
 
-app.put("/users/details/:id", authenticateToken, async (req, res) => {
+app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res) => {
   const { id } = req.params;
   const { username, name, orders, date_of_birth, image_url} = req.body;
   try {
