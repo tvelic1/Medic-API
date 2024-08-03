@@ -1,24 +1,26 @@
 const jwt = require('jsonwebtoken');
 
-const generateAndSetToken = (user, res) => {
+const generateAndSetToken = () => {
   const newToken = jwt.sign(
-    { username: user.username, role: user.role },
+    {},
     process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
-  res.cookie("tokenJwtWeb", newToken, {
+  /*res.cookie("tokenJwtWeb", newToken, {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-  });
+  });*/
+  return newToken;
 };
 
 const authenticateToken = (req, res, next) => {
-  const token = req.cookies.tokenJwtWeb;
+  const authHeader=req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).send("Access denied.");
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).send("Invalid token.");
-    generateAndSetToken(user, res);
+    //generateAndSetToken(user, res);
     req.user = user;
     next();
   });
