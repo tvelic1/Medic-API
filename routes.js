@@ -54,11 +54,11 @@ async function getUsers(req, res) {
 }
 
 async function logout(req, res) {
-  res.clearCookie("tokenJwtWeb", {
+  /*res.clearCookie("tokenJwtWeb", {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-  });
+  });*/
   res.status(200).json({ message: "Logout successful" });
 }
 
