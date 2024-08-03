@@ -7,13 +7,14 @@ require("dotenv").config();
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-const {generateAndSetToken,authenticateToken } = require('./jwt');
-const {checkUsername,isDateValid } = require('./helpers');
+const { generateAndSetToken, authenticateToken } = require("./jwt");
+const { checkUsername, isDateValid } = require("./helpers");
+const { createHash } = require("crypto");
 
 app.use(
   cors({
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
-    methods: ["GET", "POST", "OPTIONS","PUT","DELETE"],
+    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["set-cookie"],
     credentials: true,
@@ -31,7 +32,7 @@ app.options(
   "*",
   cors({
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
-    methods: ["GET", "POST", "OPTIONS","PUT","DELETE"],
+    methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["set-cookie"],
     credentials: true,
@@ -41,11 +42,12 @@ app.options(
 app.set("trust proxy", 1);
 
 app.post("/login", async (req, res) => {
-
-  const { username, password } = req.body;
+  let { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).send("Username and password are required");
   }
+  password=createHash('sha256').update(password).digest('hex')
+
   try {
     const checkUserQuery = `
       SELECT username, role FROM users
@@ -57,28 +59,25 @@ app.post("/login", async (req, res) => {
       const user = result.rows[0];
       generateAndSetToken(user, res);
       res.status(200).json({ message: "User authenticated successfully." });
-    }
-     else {
+    } else {
       res.status(401).send("Invalid username, password, or role.");
     }
   } catch (err) {
     console.error("Error checking user:", err);
     res.status(500).send("Error checking user");
   }
-
 });
 
-
 app.get("/users", authenticateToken, async (req, res) => {
-
   try {
-    const result = await pool.query("SELECT * FROM users WHERE role != 'admin'");
+    const result = await pool.query(
+      "SELECT * FROM users WHERE role != 'admin'"
+    );
     res.status(200).json(result.rows);
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).send("Error fetching users");
   }
-
 });
 app.post("/logout", (req, res) => {
   res.clearCookie("tokenJwtWeb", {
@@ -89,15 +88,22 @@ app.post("/logout", (req, res) => {
   res.status(200).json({ message: "Logout successful" });
 });
 
-
-app.post("/register",authenticateToken, checkUsername, async (req, res) => {
-  const { username, password, name, orders, image_url, date_of_birth } = req.body;
-  if (!username || !password || !name || orders === undefined || !image_url || !date_of_birth) {
+app.post("/register", authenticateToken, checkUsername, async (req, res) => {
+  let { username, password, name, orders, image_url, date_of_birth } = req.body;
+  password=createHash('sha256').update(password).digest('hex')
+  if (
+    !username ||
+    !password ||
+    !name ||
+    orders === undefined ||
+    !image_url ||
+    !date_of_birth
+  ) {
     return res.status(400).send("All fields are required");
   }
-   if(!isDateValid(date_of_birth)){
+  if (!isDateValid(date_of_birth)) {
     return res.status(400).send("Invalid date of birth");
-   }
+  }
 
   try {
     const insertUserQuery = `
@@ -106,7 +112,9 @@ app.post("/register",authenticateToken, checkUsername, async (req, res) => {
     `;
     const values = [username, password, name, orders, image_url, date_of_birth];
     const result = await pool.query(insertUserQuery, values);
-    res.status(201).json({ message: "User registered successfully", user: result.rows[0] });
+    res
+      .status(201)
+      .json({ message: "User registered successfully", user: result.rows[0] });
   } catch (err) {
     console.error("Error registering user:", err);
     res.status(500).send("Error registering user");
@@ -128,65 +136,71 @@ app.get("/users/details/:id", authenticateToken, async (req, res) => {
   }
 });
 
-app.put("/users/details/:id", authenticateToken, checkUsername, async (req, res) => {
-  const { id } = req.params;
-  const { username, name, orders, date_of_birth, image_url } = req.body;
+app.put(
+  "/users/details/:id",
+  authenticateToken,
+  checkUsername,
+  async (req, res) => {
+    const { id } = req.params;
+    const { username, name, orders, date_of_birth, image_url } = req.body;
 
-  let fieldsToUpdate = [];
-  let values = [];
+    let fieldsToUpdate = [];
+    let values = [];
 
-  if (username) {
-    fieldsToUpdate.push("username = $" + (values.length + 1));
-    values.push(username);
-  }
-  if (name) {
-    fieldsToUpdate.push("name = $" + (values.length + 1));
-    values.push(name);
-  }
-  if (orders !== undefined ) {
-    fieldsToUpdate.push("orders = $" + (values.length + 1));
-    values.push(orders);
-  }
-  if (date_of_birth) {
-    if(!isDateValid(date_of_birth))
-      return res.status(400).send("Invalid date of birth");
-     
-    fieldsToUpdate.push("date_of_birth = $" + (values.length + 1));
-    values.push(date_of_birth);
-  }
-  if (image_url) {
-    fieldsToUpdate.push("image_url = $" + (values.length + 1));
-    values.push(image_url);
-  }
+    if (username) {
+      fieldsToUpdate.push("username = $" + (values.length + 1));
+      values.push(username);
+    }
+    if (name) {
+      fieldsToUpdate.push("name = $" + (values.length + 1));
+      values.push(name);
+    }
+    if (orders !== undefined) {
+      fieldsToUpdate.push("orders = $" + (values.length + 1));
+      values.push(orders);
+    }
+    if (date_of_birth) {
+      if (!isDateValid(date_of_birth))
+        return res.status(400).send("Invalid date of birth");
 
-  if(values.length===0){
-     return res.status(200).json({ message: "No changes"})
-  }
+      fieldsToUpdate.push("date_of_birth = $" + (values.length + 1));
+      values.push(date_of_birth);
+    }
+    if (image_url) {
+      fieldsToUpdate.push("image_url = $" + (values.length + 1));
+      values.push(image_url);
+    }
 
-  const updateUserQuery = `
+    if (values.length === 0) {
+      return res.status(200).json({ message: "No changes" });
+    }
+
+    const updateUserQuery = `
     UPDATE users
-    SET ${fieldsToUpdate.join(', ')}
+    SET ${fieldsToUpdate.join(", ")}
     WHERE id = $${values.length + 1}
     RETURNING *
   `;
-  values.push(id);
+    values.push(id);
 
-  try {
-    const result = await pool.query(updateUserQuery, values);
-    if (result.rows.length > 0) {
-      res.status(200).json({ message: "User updated successfully", user: result.rows[0] });
-    } else {
-      res.status(404).send("User not found");
+    try {
+      const result = await pool.query(updateUserQuery, values);
+      if (result.rows.length > 0) {
+        res
+          .status(200)
+          .json({ message: "User updated successfully", user: result.rows[0] });
+      } else {
+        res.status(404).send("User not found");
+      }
+    } catch (err) {
+      console.error("Error updating user:", err);
+      res.status(500).send("Error updating user");
     }
-  } catch (err) {
-    console.error("Error updating user:", err);
-    res.status(500).send("Error updating user");
   }
-});
-
+);
 
 app.put("/users/block/:id", authenticateToken, async (req, res) => {
-  const{status}=req.body;
+  const { status } = req.body;
   const { id } = req.params;
   try {
     const updateUserQuery = `
@@ -194,10 +208,12 @@ app.put("/users/block/:id", authenticateToken, async (req, res) => {
       SET status = $1
       WHERE id = $2 RETURNING *
     `;
-    const values = [status,id];
+    const values = [status, id];
     const result = await pool.query(updateUserQuery, values);
     if (result.rows.length > 0) {
-      res.status(200).json({ message: "User blocked successfully", user: result.rows[0] });
+      res
+        .status(200)
+        .json({ message: "User blocked successfully", user: result.rows[0] });
     } else {
       res.status(404).send("User not found");
     }
@@ -217,7 +233,9 @@ app.delete("/users/:id", authenticateToken, async (req, res) => {
     `;
     const result = await pool.query(deleteUserQuery, [id]);
     if (result.rows.length > 0) {
-      res.status(200).json({ message: "User deleted successfully", user: result.rows[0] });
+      res
+        .status(200)
+        .json({ message: "User deleted successfully", user: result.rows[0] });
     } else {
       res.status(404).send("User not found");
     }
