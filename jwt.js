@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const generateAndSetToken = (user) => {
+const generateAndSetToken = (user,res) => {
   const newToken = jwt.sign(
     {username:user.username, role:user.role},
     process.env.JWT_SECRET,
@@ -11,7 +11,8 @@ const generateAndSetToken = (user) => {
     secure: true,
     sameSite: "none",
   });*/
-  return newToken;
+  res.setHeader('Access-Control-Expose-Headers', 'Authorization');
+  res.setHeader('Authorization', `Bearer ${newToken}`);
 };
 
 const authenticateToken = (req, res, next) => {

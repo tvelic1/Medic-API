@@ -12,7 +12,7 @@ const routes=require("./routes")
 
 app.use(
   cors({
-    origin: ["https://medic-web1.vercel.app", "http://localhost:5173", "https://transcendent-fairy-0c7c42.netlify.app"],
+    origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
     methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["set-cookie"],
@@ -24,10 +24,10 @@ app.use(
 app.options(
   "*",
   cors({
-    origin: ["https://medic-web1.vercel.app", "http://localhost:5173", "https://transcendent-fairy-0c7c42.netlify.app"],
+    origin: ["https://medic-web1.vercel.app", "http://localhost:5173"],
     methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["set-cookie","Authorization"],
+    exposedHeaders: ["set-cookie"],
     credentials: true,
   })
 );

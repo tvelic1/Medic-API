@@ -26,11 +26,10 @@ async function login(req, res) {
     const result = await pool.query(checkUserQuery, values);
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      const jwt = generateAndSetToken(user);
-      res.setHeader('Authorization', `Bearer ${jwt}`);
+      generateAndSetToken(user,res);
       res
         .status(200)
-        .json({ user: user, token: jwt, message: "User authenticated successfully." });
+        .json({ user: user,message: "User authenticated successfully." });
     } else {
       res.status(401).send("Invalid username, password, or role.");
     }
@@ -42,13 +41,12 @@ async function login(req, res) {
 
 async function getUsers(req, res) {
   try {
-    const jwt = generateAndSetToken(req.user);
+    generateAndSetToken(req.user,res);
 
     const result = await pool.query(
       "SELECT * FROM users WHERE role != 'admin'"
     );
-    res.setHeader('Authorization', `Bearer ${jwt}`);
-    res.status(200).json({ token: jwt, data: result.rows });
+    res.status(200).json({data: result.rows });
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).send("Error fetching users");
@@ -83,7 +81,7 @@ async function addUser(req, res) {
   }
 
   try {
-    const jwt = generateAndSetToken(req.user);
+    generateAndSetToken(req.user,res);
 
     const insertUserQuery = `
         INSERT INTO users (username, password, name, orders, image_url, date_of_birth)
@@ -101,7 +99,6 @@ async function addUser(req, res) {
     res
       .status(201)
       .json({
-        token: jwt,
         message: "User registered successfully",
         user: result.rows[0],
       });
@@ -113,13 +110,12 @@ async function addUser(req, res) {
 
 async function getUserDetails(req, res) {
   const { id } = req.params;
-  const jwt=generateAndSetToken(req.user)
-  res.setHeader('Authorization', `Bearer ${jwt}`);
+  generateAndSetToken(req.user,res)
 
   try {
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
     if (result.rows.length > 0) {
-      res.status(200).json({token:jwt, data:result.rows[0]});
+      res.status(200).json({data:result.rows[0]});
     } else {
       res.status(404).send("User not found");
     }
@@ -173,12 +169,12 @@ async function updateUserDetails(req, res) {
   values.push(id);
 
   try {
-    const jwt=generateAndSetToken(req.user);
+    generateAndSetToken(req.user,res);
     const result = await pool.query(updateUserQuery, values);
     if (result.rows.length > 0) {
       res
         .status(200)
-        .json({ token: jwt, message: "User updated successfully", user: result.rows[0] });
+        .json({message: "User updated successfully", user: result.rows[0] });
     } else {
       res.status(404).send("User not found");
     }
@@ -192,7 +188,7 @@ async function blockUser(req, res) {
   const { status } = req.body;
   const { id } = req.params;
   try {
-    const jwt=generateAndSetToken(req.user);
+    generateAndSetToken(req.user,res);
     const updateUserQuery = `
         UPDATE users
         SET status = $1
@@ -203,7 +199,7 @@ async function blockUser(req, res) {
     if (result.rows.length > 0) {
       res
         .status(200)
-        .json({ token: jwt,message: "User blocked successfully", user: result.rows[0] });
+        .json({message: "User blocked successfully", user: result.rows[0] });
     } else {
       res.status(404).send("User not found");
     }
@@ -216,7 +212,7 @@ async function blockUser(req, res) {
 async function deleteUser(req, res) {
   const { id } = req.params;
   try {
-    const jwt=generateAndSetToken(req.user);
+    generateAndSetToken(req.user,res);
     const deleteUserQuery = `
         DELETE FROM users
         WHERE id = $1
@@ -226,7 +222,7 @@ async function deleteUser(req, res) {
     if (result.rows.length > 0) {
       res
         .status(200)
-        .json({ token:jwt, message: "User deleted successfully", user: result.rows[0] });
+        .json({message: "User deleted successfully", user: result.rows[0] });
     } else {
       res.status(404).send("User not found");
     }
