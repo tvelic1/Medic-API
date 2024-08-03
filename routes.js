@@ -26,7 +26,8 @@ async function login(req, res) {
     const result = await pool.query(checkUserQuery, values);
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      const jwt = generateAndSetToken();
+      const jwt = generateAndSetToken(user);
+      res.setHeader('Authorization', `Bearer ${jwt}`);
       res
         .status(200)
         .json({ user: user, token: jwt, message: "User authenticated successfully." });
@@ -41,11 +42,12 @@ async function login(req, res) {
 
 async function getUsers(req, res) {
   try {
-    const jwt = generateAndSetToken();
+    const jwt = generateAndSetToken(req.user);
 
     const result = await pool.query(
       "SELECT * FROM users WHERE role != 'admin'"
     );
+    res.setHeader('Authorization', `Bearer ${jwt}`);
     res.status(200).json({ token: jwt, data: result.rows });
   } catch (err) {
     console.error("Error fetching users:", err);
@@ -81,7 +83,7 @@ async function addUser(req, res) {
   }
 
   try {
-    const jwt = generateAndSetToken();
+    const jwt = generateAndSetToken(req.user);
 
     const insertUserQuery = `
         INSERT INTO users (username, password, name, orders, image_url, date_of_birth)
@@ -111,7 +113,9 @@ async function addUser(req, res) {
 
 async function getUserDetails(req, res) {
   const { id } = req.params;
-  const jwt=generateAndSetToken()
+  const jwt=generateAndSetToken(req.user)
+  res.setHeader('Authorization', `Bearer ${jwt}`);
+
   try {
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
     if (result.rows.length > 0) {
@@ -169,7 +173,7 @@ async function updateUserDetails(req, res) {
   values.push(id);
 
   try {
-    const jwt=generateAndSetToken();
+    const jwt=generateAndSetToken(req.user);
     const result = await pool.query(updateUserQuery, values);
     if (result.rows.length > 0) {
       res
@@ -188,7 +192,7 @@ async function blockUser(req, res) {
   const { status } = req.body;
   const { id } = req.params;
   try {
-    const jwt=generateAndSetToken();
+    const jwt=generateAndSetToken(req.user);
     const updateUserQuery = `
         UPDATE users
         SET status = $1
@@ -212,7 +216,7 @@ async function blockUser(req, res) {
 async function deleteUser(req, res) {
   const { id } = req.params;
   try {
-    const jwt=generateAndSetToken();
+    const jwt=generateAndSetToken(req.user);
     const deleteUserQuery = `
         DELETE FROM users
         WHERE id = $1

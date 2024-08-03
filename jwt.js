@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 
-const generateAndSetToken = () => {
+const generateAndSetToken = (user) => {
   const newToken = jwt.sign(
-    {},
+    {username:user.username, role:user.role},
     process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
@@ -22,6 +22,7 @@ const authenticateToken = (req, res, next) => {
     if (err) return res.status(403).send("Invalid token.");
     //generateAndSetToken(user, res);
     req.user = user;
+    //console.log(user);
     next();
   });
 };

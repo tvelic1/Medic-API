@@ -27,7 +27,7 @@ app.options(
     origin: ["https://medic-web1.vercel.app", "http://localhost:5173", "https://transcendent-fairy-0c7c42.netlify.app"],
     methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["set-cookie"],
+    exposedHeaders: ["set-cookie","Authorization"],
     credentials: true,
   })
 );
