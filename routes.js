@@ -41,9 +41,8 @@ async function login(req, res) {
 
 async function getUsers(req, res) {
   try {
-    //generateAndSetToken(req.user,res); //prilikom svake akcije, novi token se generise i restratuje se vrijeme za dozvoljenu neaktivnost
-    res.setHeader('Access-Control-Expose-Headers', 'Authorization');
-    res.setHeader('Authorization', `Bearer ${req.token}`);
+    generateAndSetToken(req.user,res); //prilikom svake akcije, novi token se generise i restratuje se vrijeme za dozvoljenu neaktivnost
+    
     const result = await pool.query(
       "SELECT * FROM users WHERE role != 'admin'"
     );
@@ -79,9 +78,7 @@ async function addUser(req, res) {
   }
 
   try {
-    //generateAndSetToken(req.user,res);
-    res.setHeader('Access-Control-Expose-Headers', 'Authorization');
-    res.setHeader('Authorization', `Bearer ${req.token}`);
+    generateAndSetToken(req.user,res);
     const insertUserQuery = `
         INSERT INTO users (username, password, name, orders, image_url, date_of_birth)
         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
@@ -109,9 +106,7 @@ async function addUser(req, res) {
 
 async function getUserDetails(req, res) {
   const { id } = req.params;
-  //generateAndSetToken(req.user,res)
-  res.setHeader('Access-Control-Expose-Headers', 'Authorization');
-  res.setHeader('Authorization', `Bearer ${req.token}`);
+  generateAndSetToken(req.user,res)
   try {
     const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
     if (result.rows.length > 0) {
@@ -128,8 +123,8 @@ async function getUserDetails(req, res) {
 async function updateUserDetails(req, res) {
   const { id } = req.params;
   const { username, name, orders, date_of_birth, image_url } = req.body;
-  res.setHeader('Access-Control-Expose-Headers', 'Authorization');
-  res.setHeader('Authorization', `Bearer ${req.token}`);
+  generateAndSetToken(req.user,res);
+
   //vrši se update samo za one atribute koji su promijenjeni, uskalđena je logika sa frontendom, za password ne piše da se treba moći update...
   let fieldsToUpdate = [];
   let values = [];
@@ -171,7 +166,6 @@ async function updateUserDetails(req, res) {
   values.push(id);
 
   try {
-    //generateAndSetToken(req.user,res);
     const result = await pool.query(updateUserQuery, values);
     if (result.rows.length > 0) {
       res
@@ -189,10 +183,9 @@ async function updateUserDetails(req, res) {
 async function blockUser(req, res) {
   const { status } = req.body;
   const { id } = req.params;
-  res.setHeader('Access-Control-Expose-Headers', 'Authorization');
-  res.setHeader('Authorization', `Bearer ${req.token}`);
+  generateAndSetToken(req.user,res);
+
   try {
-    //generateAndSetToken(req.user,res);
     const updateUserQuery = `
         UPDATE users
         SET status = $1
