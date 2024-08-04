@@ -41,7 +41,7 @@ async function login(req, res) {
 
 async function getUsers(req, res) {
   try {
-    generateAndSetToken(req.user,res);
+    generateAndSetToken(req.user,res); //prilikom svake akcije, novi token se generise i restratuje se vrijeme za dozvoljenu neaktivnost
 
     const result = await pool.query(
       "SELECT * FROM users WHERE role != 'admin'"
@@ -54,17 +54,14 @@ async function getUsers(req, res) {
 }
 
 async function logout(req, res) {
-  /*res.clearCookie("tokenJwtWeb", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });*/
+  //logout je uvijek moguć neovisno od tokena
   res.status(200).json({ message: "Logout successful" });
 }
 
 async function addUser(req, res) {
   const { username, password, name, orders, image_url, date_of_birth } =
     req.body;
+    //hesiranje passoworda za bazu
   const hashpassword = createHash("sha256").update(password).digest("hex");
   if (
     !username ||
@@ -128,7 +125,7 @@ async function getUserDetails(req, res) {
 async function updateUserDetails(req, res) {
   const { id } = req.params;
   const { username, name, orders, date_of_birth, image_url } = req.body;
-
+  //vrši se update samo za one atribute koji su promijenjeni, uskalđena je logika sa frontendom, za password ne piše da se treba moći update...
   let fieldsToUpdate = [];
   let values = [];
 

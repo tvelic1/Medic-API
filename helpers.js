@@ -10,7 +10,7 @@ const pool = new Pool({
   
 const checkUsername = async (req, res, next) => {
   const { username } = req.body;
-
+  //osiguravanje da je username jedinstven
   if (!username) {
     return next();
   } 
