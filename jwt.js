@@ -7,8 +7,7 @@ const generateAndSetToken = (user,res) => {
     process.env.JWT_SECRET,
     { expiresIn: 3600 }
   );
-  res.setHeader('Access-Control-Expose-Headers', 'Authorization');
-  res.setHeader('Authorization', `Bearer ${newToken}`);
+ 
 };
 
 const authenticateToken = (req, res, next) => {
@@ -18,8 +17,11 @@ const authenticateToken = (req, res, next) => {
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).send("Invalid token.");
     req.user = user;
-    next();
+   
   });
+  res.setHeader('Access-Control-Expose-Headers', 'Authorization');
+  res.setHeader('Authorization', `Bearer ${token}`);
+  next();
 };
 
 module.exports = {
