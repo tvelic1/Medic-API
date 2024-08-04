@@ -7,11 +7,8 @@ const generateAndSetToken = (user,res) => {
     process.env.JWT_SECRET,
     { expiresIn: 3600 }
   );
-  /*aplikacija trpi sat vremena neaktivnosti, odnosno nakon svake akcije token se restartuje*/
   res.setHeader('Access-Control-Expose-Headers', 'Authorization');
-  jwt.verify(newToken, process.env.JWT_SECRET, (err, user) => {
-    if (!err) res.setHeader('Authorization', `Bearer ${newToken}`);
-  });
+  res.setHeader('Authorization', `Bearer ${newToken}`);
 };
 
 const authenticateToken = (req, res, next) => {
