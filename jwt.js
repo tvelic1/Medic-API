@@ -19,10 +19,10 @@ const authenticateToken = (req, res, next) => {
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).send("Invalid token.");
     req.user = user;
+    req.token=token;
    
   });
-  res.setHeader('Access-Control-Expose-Headers', 'Authorization');
-  res.setHeader('Authorization', `Bearer ${token}`);
+  
   next();
 };
 
