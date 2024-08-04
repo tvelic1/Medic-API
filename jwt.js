@@ -7,6 +7,8 @@ const generateAndSetToken = (user,res) => {
     process.env.JWT_SECRET,
     { expiresIn: 3600 }
   );
+  res.setHeader('Access-Control-Expose-Headers', 'Authorization');
+  res.setHeader('Authorization', `Bearer ${newToken}`);
  
 };
 
