@@ -5,7 +5,7 @@ const generateAndSetToken = (user,res) => {
   const newToken = jwt.sign(
     {username:user.username, role:user.role},
     process.env.JWT_SECRET,
-    { exp: Math.floor(Date.now() / 1000) + (60 * 60) }
+    { expiresIn: 3600 }
   );
   /*aplikacija trpi sat vremena neaktivnosti, odnosno nakon svake akcije token se restartuje*/
   res.setHeader('Access-Control-Expose-Headers', 'Authorization');
